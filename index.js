@@ -10,7 +10,7 @@ var corsOptions = {
     origin: 'http://localhost:8081',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204 
 }
-const MAXBOX_ACCESS_TOKEN = 'pk.eyJ1IjoidGl0b3VhYW4iLCJhIjoiY2ttbTZnMTYzMGQwbDJvbHcwd3l4MDdzZyJ9.9ckoy9LTQ3nzMhl_HuwMXQ';
+const MAXBOX_ACCESS_TOKEN = '';
 let exploreArtists = [];
 
 app.use(bodyParser.json());
@@ -18,8 +18,8 @@ app.use(cors(corsOptions));
 
 
 var spotifyApi = new SpotifyWebApi({
-    clientId: 'f844d414d7da4b7897082fa56d8d9542',
-    clientSecret: '3df110b501d3494f994ed343c6b3d2d6'
+    clientId: '',
+    clientSecret: ''
 });
 
 
