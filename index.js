@@ -5,12 +5,12 @@ var SpotifyWebApi = require('spotify-web-api-node');
 const axios = require('axios');
 
 const app = express()
-
+const credentials = require('./credentials');
 var corsOptions = {
     origin: 'http://localhost:8081',
     optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204 
 }
-const MAXBOX_ACCESS_TOKEN = 'pk.eyJ1IjoidGl0b3VhYW4iLCJhIjoiY2ttbTZnMTYzMGQwbDJvbHcwd3l4MDdzZyJ9.9ckoy9LTQ3nzMhl_HuwMXQ';
+const MAXBOX_ACCESS_TOKEN = credentials.mapbox;
 let exploreArtists = [];
 
 app.use(bodyParser.json());
@@ -18,8 +18,8 @@ app.use(cors(corsOptions));
 
 
 var spotifyApi = new SpotifyWebApi({
-    clientId: 'f844d414d7da4b7897082fa56d8d9542',
-    clientSecret: '3df110b501d3494f994ed343c6b3d2d6'
+    clientId: credentials.spotifyId,
+    clientSecret: credentials.spotifySecret
 });
 
 
@@ -157,12 +157,11 @@ async function getLatLng(address) {
     let mapboxUrl = 'https://api.mapbox.com/geocoding/v5/mapbox.places/' + encodeURIComponent(address) + '.json?access_token=' + MAXBOX_ACCESS_TOKEN + '&autocomplete=true&limit=1';
     try {
         let latLng = await axios.get(mapboxUrl);
-        if (latLng.data.features[0].bbox){
+        if (latLng.data.features[0].bbox) {
             let random = getRandomLatLng(latLng.data.features[0].center[1], latLng.data.features[0].center[0]);
             console.log(random)
             return random;
-        }
-        else return latLng.data.features[0].center;
+        } else return latLng.data.features[0].center;
     } catch (err) {
         return err;
     }
@@ -176,7 +175,9 @@ async function getExploreArtists(id, ids) {
         for (let artist of relatedArtists) {
             if (!exploreArtists.includes(artist) && !ids.includes(artist.id)) {
                 artist.location = await getArtistLocation(artist);
-            }
+                await wait(1000);
+            } else
+                relatedArtists.splice(relatedArtists.indexOf(artist), 1);
         }
         return relatedArtists;
     } catch (err) {
@@ -186,7 +187,6 @@ async function getExploreArtists(id, ids) {
 }
 
 async function getArtistLocation(artist) {
-    let id = artist.id;
     let name = artist.name;
     let mbUrl = 'https://musicbrainz.org/ws/2/artist?query=' + encodeURIComponent(name) + '&limit=5&fmt=json';
     console.log(mbUrl);
@@ -222,9 +222,13 @@ function getRandomLatLng(lat, lng) {
     let max = Math.floor(301);
     let random = Math.floor(Math.random() * (max - min)) + min;
     console.log(random);
-    let newLat = lat  + (random / 6378) * (180 / Math.PI);
+    let newLat = lat + (random / 6378) * (180 / Math.PI);
     random = Math.floor(Math.random() * (max - min)) + min;
     console.log(random);
-    let newLng = lng + (random / 6378) * (180 / Math.PI) / Math.cos(lat * Math.PI/180);
+    let newLng = lng + (random / 6378) * (180 / Math.PI) / Math.cos(lat * Math.PI / 180);
     return [newLng, newLat];
-  }
+}
+
+function wait(milliseconds) {
+    return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
