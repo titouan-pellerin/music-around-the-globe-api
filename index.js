@@ -8,10 +8,12 @@ const app = express()
 const credentials = require('./credentials');
 var corsOptions = {
     origin: 'http://localhost:8081',
-    optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204 
+    optionsSuccessStatus: 200
 }
 const MAXBOX_ACCESS_TOKEN = credentials.mapbox;
+
 let exploreArtists = [];
+let selectedArtists = [];
 
 app.use(bodyParser.json());
 app.use(cors(corsOptions));
@@ -61,11 +63,21 @@ app.get('/artists', (req, res) => {
 })
 
 app.get('/artists/explore', (req, res) => {
-    let selectedArtist = req.query.id;
-    let ids = req.query.ids.split(',');
-    getExploreArtists(selectedArtist, ids).then(data => {
-        exploreArtists.push(data);
-        res.status(200).json(data);
+    //let selectedArtist = req.query.id;
+    exploreArtists = [];
+    selectedArtists = req.query.ids.split(',');
+    //let promises = [];
+    //for(let id of ids) promises.push(getExploreArtists(id, ids));
+
+    let artists = selectedArtists.reduce((accumulatorPromise, nextID) => {
+        return accumulatorPromise.then(() => {
+            return getExploreArtists(nextID)
+        });
+    }, Promise.resolve());
+
+
+    artists.then(() => {
+        res.status(200).json(exploreArtists);
     }).catch(err => {
         res.status(400).json({
             message: err.message
@@ -76,7 +88,7 @@ app.get('/artists/explore', (req, res) => {
 
 app.get('/artists/search/:query', (req, res) => {
     spotifyApi.searchArtists(req.params.query, {
-        limit: 5,
+        limit: 6,
         offset: 0
     }).then(data => {
         res.status(200).send(data.body.artists);
@@ -167,18 +179,19 @@ async function getLatLng(address) {
     }
 }
 
-async function getExploreArtists(id, ids) {
+async function getExploreArtists(id) {
     let relatedArtists = [];
     try {
         let artistsData = await spotifyApi.getArtistRelatedArtists(id);
         relatedArtists = artistsData.body.artists.slice(0, 10);
         for (let artist of relatedArtists) {
-            if (!exploreArtists.includes(artist) && !ids.includes(artist.id)) {
+            if (!artistAlreadyExists(artist) && !selectedArtists.includes(artist.id)) {
                 artist.location = await getArtistLocation(artist);
-                await wait(1000);
+                await wait(800);
             } else
                 relatedArtists.splice(relatedArtists.indexOf(artist), 1);
         }
+        exploreArtists = exploreArtists.concat(relatedArtists);
         return relatedArtists;
     } catch (err) {
         console.log(err);
@@ -231,4 +244,17 @@ function getRandomLatLng(lat, lng) {
 
 function wait(milliseconds) {
     return new Promise(resolve => setTimeout(resolve, milliseconds));
+}
+
+function artistAlreadyExists(artist){
+    if(exploreArtists.length > 0){
+        for(let anArtist of exploreArtists){
+            if(artist.id == anArtist.id){
+                console.log('Duplicate : ' + anArtist.id);
+                return true;
+            }
+        }
+        return false;
+
+    } else return false;
 }
