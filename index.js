@@ -7,7 +7,7 @@ const axios = require('axios');
 const app = express()
 const credentials = require('./credentials');
 var corsOptions = {
-    origin: 'http://globe.titouanpellerin.info',
+    origin: 'https://music-around-the-globe.herokuapp.com',
     //origin: 'http://localhost:8081',
     optionsSuccessStatus: 200
 }
@@ -153,7 +153,7 @@ app.get('/artist/location/:name', (req, res) => {
 })
 
 
-app.listen(80, () => {
+app.listen(process.env.PORT || 8080, () => {
     console.log("Server listening")
 })
 
