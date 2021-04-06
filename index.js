@@ -7,7 +7,8 @@ const axios = require('axios');
 const app = express()
 const credentials = require('./credentials');
 var corsOptions = {
-    origin: 'http://localhost:8081',
+    origin: 'http://globe.titouanpellerin.info',
+    //origin: 'http://localhost:8081',
     optionsSuccessStatus: 200
 }
 const MAXBOX_ACCESS_TOKEN = credentials.mapbox;
@@ -63,20 +64,20 @@ app.get('/artists', (req, res) => {
 })
 
 app.get('/artists/explore', (req, res) => {
-    //let selectedArtist = req.query.id;
+    let selectedArtist = req.query.id;
     exploreArtists = [];
     selectedArtists = req.query.ids.split(',');
     //let promises = [];
     //for(let id of ids) promises.push(getExploreArtists(id, ids));
 
-    let artists = selectedArtists.reduce((accumulatorPromise, nextID) => {
+    /*let artists = selectedArtists.reduce((accumulatorPromise, nextID) => {
         return accumulatorPromise.then(() => {
             return getExploreArtists(nextID)
         });
-    }, Promise.resolve());
+    }, Promise.resolve());*/
 
 
-    artists.then(() => {
+    getExploreArtists(id).then(() => {
         res.status(200).json(exploreArtists);
     }).catch(err => {
         res.status(400).json({
@@ -143,6 +144,14 @@ app.get('/artist/preview/:id', (req, res) => {
     }
 })
 
+app.get('/artist/location/:name', (req, res) => {
+    getArtistLocation(req.params.name).then(location => {
+        res.status(200).json(location);
+    }).catch(err => {
+        res.status(400).json({message: err.message});
+    })
+})
+
 
 app.listen(8080, () => {
     console.log("Server listening")
@@ -199,8 +208,7 @@ async function getExploreArtists(id) {
     }
 }
 
-async function getArtistLocation(artist) {
-    let name = artist.name;
+async function getArtistLocation(name) {
     let mbUrl = 'https://musicbrainz.org/ws/2/artist?query=' + encodeURIComponent(name) + '&limit=5&fmt=json';
     console.log(mbUrl);
     try {
