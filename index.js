@@ -7,7 +7,7 @@ const axios = require('axios');
 const app = express()
 const credentials = require('./credentials');
 var corsOptions = {
-    origin: 'https://music-around-the-globe.herokuapp.com',
+    origin: 'http://music-around-the-globe.herokuapp.com',
     //origin: 'http://localhost:8081',
     optionsSuccessStatus: 200
 }
